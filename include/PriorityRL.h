@@ -16,4 +16,7 @@ class PriorityRL {
 
     // Remove the process at the front of the specified priority level
     int removeProcess(int priority);
+
+    // Get the next process to run
+    int getHighestPriorityProcess() const;
 };

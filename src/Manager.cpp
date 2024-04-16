@@ -1,7 +1,4 @@
 #include "Manager.h"
-#include <PriorityRL.h>
-#include <iostream>
-#include <sstream>
 
 Manager::Manager(int numPriorityLevels, std::vector<int> resourceInventories) {
     init(numPriorityLevels, resourceInventories);
@@ -14,7 +11,8 @@ void Manager::init(int numPriorityLevels,
 
     resources.clear();
 
-    for (int i = 0; i < resourceInventories.size(); ++i) {
+    for (int i = 0; i < resourceInventories.size() - 1; ++i) {
+        // Create a RCB with id = i and inventory = resourceInventories[i]
         resources.emplace_back(i, resourceInventories[i]);
     }
 
@@ -22,6 +20,8 @@ void Manager::init(int numPriorityLevels,
     // No process running initially
     runningProcess = -1;
 }
+
+void Manager::init_default() { init(3, {1, 1, 2, 3}); }
 
 void Manager::executeCommand(const std::string &command) {
     std::istringstream stream(command);
@@ -33,6 +33,16 @@ void Manager::executeCommand(const std::string &command) {
         stream >> n >> u0 >> u1 >> u2 >> u3;
         init(n, {u0, u1, u2, u3});
     } else if (cmd == "id") {
-        init(3, {1, 1, 2, 3}); // Default values
+        init_default();
+    } else if (cmd == "cr") {
+        int priority;
+        stream >> priority;
+        create(priority);
     }
+}
+
+void Manager::create(int priority) {
+    int nextID = 1;
+    processes.emplace_back(nextID, priority);
+    readyList.insertProcess(nextID, priority);
 }

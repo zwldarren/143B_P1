@@ -11,7 +11,9 @@ struct PCB {
     std::vector<int> children;
     std::vector<int> resources;
 
-    PCB(int id, int parent_id, int priority = 0)
+    PCB(int id, int priority)
+        : id(id), state(ProcessState::READY), priority(priority) {}
+    PCB(int id, int parent_id, int priority)
         : id(id), state(ProcessState::READY), parent(parent_id),
           priority(priority) {}
 };
