@@ -1,12 +1,21 @@
 #pragma once
 
 #include "PCB.h"
+#include "PriorityRL.h"
 #include "RCB.h"
+#include <list>
 #include <string>
 #include <vector>
 
 class Manager {
+  private:
+    std::vector<PCB> processes;
+    std::vector<RCB> resources;
+    PriorityRL readyList;
+    int runningProcess; // Index of the currently running process
+
   public:
+    Manager();
     Manager(int numProcesses, int numResources);
     ~Manager();
 
@@ -19,9 +28,4 @@ class Manager {
 
     // Parse and execute commands
     void executeCommand(const std::string &command);
-
-  private:
-    std::vector<PCB> processes;
-    std::vector<RCB> resources;
-    int runningProcess; // Index of the currently running process
 };
