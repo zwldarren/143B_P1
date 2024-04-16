@@ -5,10 +5,11 @@
 class PriorityRL {
   private:
     // 3 queues for 3 priorities
-    std::array<std::queue<int>, 3> queues;
+    std::vector<std::queue<int>> queues;
 
   public:
     PriorityRL() {}
+    PriorityRL(int numPriorityLevels);
 
     // Add a process to a specific priority level
     void insertProcess(int processId, int priority);

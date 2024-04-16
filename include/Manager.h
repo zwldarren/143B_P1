@@ -9,17 +9,19 @@
 
 class Manager {
   private:
-    std::vector<PCB> processes;
-    std::vector<RCB> resources;
+    std::list<PCB> processes;
+    std::list<RCB> resources;
     PriorityRL readyList;
     int runningProcess; // Index of the currently running process
 
   public:
-    Manager();
-    Manager(int numProcesses, int numResources);
-    ~Manager();
+    Manager() {}
+    Manager(int numPriorityLevels, std::vector<int> resourceInventories);
+    ~Manager() {}
 
-    void init(); // Initialize all data structures
+    // Initialize all data structures
+    void init(int numPriorityLevels, std::vector<int> resourceInventories);
+
     void createProcess(int processID, int parentID); // Create a new process
     void destroyProcess(int processID); // Destroy a process and its descendants
     void requestResource(int processID, int resourceID); // Request a resource

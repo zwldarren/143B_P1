@@ -1,3 +1,4 @@
+#include "Manager.h"
 #include <fstream>
 #include <getopt.h>
 #include <iostream>
@@ -11,9 +12,11 @@ void readFile(const std::string &filePath) {
         return;
     }
 
+    Manager manager;
     std::string line;
     while (std::getline(file, line)) {
-        std::cout << line << std::endl;
+        manager.executeCommand(line);
+        // std::cout << line << std::endl;
     }
 
     file.close();
