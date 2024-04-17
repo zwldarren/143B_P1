@@ -2,10 +2,14 @@
 
 void Manager::init(int numPriorityLevels,
                    std::vector<int> resourceInventories) {
+    runningProcess = -1;
+    nextProcessID = 0;
+    nextResourceID = 0;
 
     readyList = PriorityRL(numPriorityLevels);
 
     resources.clear();
+    processMap.clear();
 
     for (int i = 0; i < resourceInventories.size(); ++i) {
         // Create a RCB with id = nextResourceID and
@@ -18,6 +22,7 @@ void Manager::init(int numPriorityLevels,
     auto initProcess = std::make_shared<PCB>(nextProcessID, 0);
     initProcess->state = ProcessState::RUNNING;
     readyList.insertProcess(initProcess);
+    processMap[nextProcessID] = initProcess;
     nextProcessID++;
     runningProcess = 0;
 }
@@ -38,12 +43,55 @@ void Manager::create(int priority) {
     // update child list of current running process
     auto parent = readyList.getRunningProcess();
     parent->children.push_back(newProcess);
-
     // update parent of new process
     newProcess->parent = parent;
 
+    // add to map
+    processMap[nextProcessID] = newProcess;
+
     nextProcessID++;
     scheduler();
+}
+
+void Manager::destroy(int processID) {
+    std::stack<int> stack;
+    stack.push(processID);
+
+    while (!stack.empty()) {
+        int currentID = stack.top();
+        stack.pop();
+
+        auto it = processMap.find(currentID);
+        if (it == processMap.end()) {
+            std::cerr << "Process not found" << std::endl;
+            continue;
+        }
+
+        auto process = it->second;
+
+        // Push all children to stack
+        for (auto &child : process->children) {
+            stack.push(child->id);
+        }
+
+        // Remove from parent's child list
+        if (process->parent) {
+            auto &siblings = process->parent->children;
+            siblings.erase(
+                std::remove_if(siblings.begin(), siblings.end(),
+                               [currentID](const std::shared_ptr<PCB> &pcb) {
+                                   return pcb->id == currentID;
+                               }),
+                siblings.end());
+        }
+
+        // TODO: release resources
+
+        readyList.removeProcess(process->priority);
+
+        // remove from map
+        processMap.erase(currentID);
+    }
 }
 
 int Manager::scheduler() {
@@ -74,6 +122,10 @@ void Manager::executeCommand(const std::string &command) {
         int priority;
         stream >> priority;
         create(priority);
+    } else if (cmd == "de") {
+        int processID;
+        stream >> processID;
+        destroy(processID);
     }
     std::cout << runningProcess << std::endl;
 }

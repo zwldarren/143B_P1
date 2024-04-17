@@ -14,7 +14,4 @@ struct PCB {
 
     PCB(int id, int priority)
         : id(id), state(ProcessState::READY), priority(priority) {}
-    PCB(int id, std::shared_ptr<PCB> parent, int priority)
-        : id(id), state(ProcessState::READY), parent(parent),
-          priority(priority) {}
 };

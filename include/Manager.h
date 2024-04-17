@@ -3,15 +3,20 @@
 #include "PCB.h"
 #include "PriorityRL.h"
 #include "RCB.h"
+#include <algorithm>
 #include <iostream>
 #include <list>
 #include <memory>
 #include <sstream>
+#include <stack>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class Manager {
   private:
+    // Map of process ID to PCB pointer
+    std::unordered_map<int, std::shared_ptr<PCB>> processMap;
     std::list<RCB> resources;
     PriorityRL readyList;
     int runningProcess; // Index of the currently running process
@@ -19,7 +24,7 @@ class Manager {
     int nextResourceID; // ID to assign to the next resource
 
   public:
-    Manager() : runningProcess(-1), nextProcessID(0), nextResourceID(0) {}
+    Manager() {}
     ~Manager() {}
 
     // Initialize all data structures
