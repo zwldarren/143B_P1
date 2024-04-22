@@ -137,6 +137,21 @@ int Manager::scheduler() {
     return runningProcess;
 }
 
+void Manager::timeout() {
+    // Get the current running process
+    auto process = readyList.getRunningProcess();
+    if (process == nullptr) {
+        // TODO: add result to output
+        return;
+    }
+
+    // Move the process to the end of the queue
+    readyList.removeProcess(process->priority);
+    readyList.insertProcess(process);
+
+    scheduler();
+}
+
 void Manager::executeCommand(const std::string &command) {
     std::istringstream stream(command);
     std::string cmd;
@@ -160,6 +175,12 @@ void Manager::executeCommand(const std::string &command) {
         int units, resourceID;
         stream >> units >> resourceID;
         request(runningProcess, resourceID);
+    } else if (cmd == "rl") {
+        int units, resourceID;
+        stream >> units >> resourceID;
+        release(runningProcess, resourceID);
+    } else if (cmd == "to") {
+        timeout();
     }
     std::cout << runningProcess << std::endl;
 }
