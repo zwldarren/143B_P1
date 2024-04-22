@@ -117,8 +117,49 @@ void Manager::request(int units, int resourceID) {
         process->state = ProcessState::BLOCKED;
 
         // Move process from readyList to waitlist of resource
-        resource->waitlist.push(process->id);
+        resource->waitlist.push(process);
         readyList.removeProcess(process->priority);
+
+        scheduler();
+    }
+}
+
+void Manager::release(int units, int resourceID) {
+    auto it = resources.find(resourceID);
+    if (it == resources.end()) {
+        // TODO: add result to output
+        return;
+    }
+    auto resource = it->second;
+
+    // Current running process
+    auto process = readyList.getRunningProcess();
+
+    if (resource->state + units > resource->inventory) {
+        // TODO: add result to output
+        return;
+    }
+
+    // Remove the resource from the running process's resource list
+    resource->state += units;
+
+    process->resources.erase(
+        std::remove_if(process->resources.begin(), process->resources.end(),
+                       [resourceID](const std::shared_ptr<RCB> &rcb) {
+                           return rcb->id == resourceID;
+                       }),
+        process->resources.end());
+
+    // Check if waitlist is not empty
+    if (!resource->waitlist.empty()) {
+        // Move process from head of waitlist to readyList
+        auto blockedProcess = resource->waitlist.front();
+        resource->waitlist.pop();
+        blockedProcess->state = ProcessState::READY;
+        readyList.insertProcess(blockedProcess);
+
+        // Insert resource to blocked process's resource list
+        blockedProcess->resources.push_back(resource);
 
         scheduler();
     }

@@ -1,8 +1,8 @@
 #pragma once
-#include "RCB.h"
 #include <memory>
 #include <vector>
 
+struct RCB;
 enum class ProcessState { READY, RUNNING, BLOCKED };
 
 struct PCB {
