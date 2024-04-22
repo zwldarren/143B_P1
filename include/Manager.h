@@ -17,7 +17,8 @@ class Manager {
   private:
     // Map of process ID to PCB pointer
     std::unordered_map<int, std::shared_ptr<PCB>> processMap;
-    std::list<RCB> resources;
+    // Map of resource ID to RCB pointer
+    std::unordered_map<int, std::shared_ptr<RCB>> resources;
     PriorityRL readyList;
     int runningProcess; // Index of the currently running process
     int nextProcessID;  // ID to assign to the next process
@@ -33,7 +34,7 @@ class Manager {
 
     void create(int priority);   // Create a new process
     void destroy(int processID); // Destroy a process and its descendants
-    void request(int processID, int resourceID); // Request a resource
+    void request(int units, int resourceID);     // Request a resource
     void release(int processID, int resourceID); // Release a resource
 
     int scheduler(); // return the id of the running process

@@ -1,7 +1,6 @@
 #include "Manager.h"
 
-void Manager::init(int numPriorityLevels,
-                   std::vector<int> resourceInventories) {
+void Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
     runningProcess = -1;
     nextProcessID = 0;
     nextResourceID = 0;
@@ -11,11 +10,13 @@ void Manager::init(int numPriorityLevels,
     resources.clear();
     processMap.clear();
 
-    for (int i = 0; i < resourceInventories.size(); ++i) {
+    for (int i = 0; i < totalResources.size(); ++i) {
         // Create a RCB with id = nextResourceID and
-        // inventory = resourceInventories[i]
+        // inventory = totalResources[i]
+        auto newResource =
+            std::make_shared<RCB>(nextResourceID, totalResources[i]);
+        resources[nextResourceID] = newResource;
         nextResourceID++;
-        resources.emplace_back(nextResourceID, resourceInventories[i]);
     }
 
     // Create the init process with id = 0, priority = 0
@@ -94,6 +95,35 @@ void Manager::destroy(int processID) {
     }
 }
 
+void Manager::request(int units, int resourceID) {
+    auto it = resources.find(resourceID);
+    if (it == resources.end()) {
+        // TODO: add result to output
+        return;
+    }
+    auto resource = it->second;
+
+    // Current running process
+    auto process = readyList.getRunningProcess();
+
+    // Check if free units are available
+    if (resource->state >= units) {
+        // Add the resource to the running process's resource list
+        resource->state -= units;
+
+        process->resources.push_back(resource);
+    } else {
+        // Mark the current running process as blocked
+        process->state = ProcessState::BLOCKED;
+
+        // Move process from readyList to waitlist of resource
+        resource->waitlist.push(process->id);
+        readyList.removeProcess(process->priority);
+
+        scheduler();
+    }
+}
+
 int Manager::scheduler() {
     // Get the process with the highest priority
     auto nextProcess = readyList.getHighestPriorityProcess();
@@ -126,6 +156,10 @@ void Manager::executeCommand(const std::string &command) {
         int processID;
         stream >> processID;
         destroy(processID);
+    } else if (cmd == "rq") {
+        int units, resourceID;
+        stream >> units >> resourceID;
+        request(runningProcess, resourceID);
     }
     std::cout << runningProcess << std::endl;
 }
