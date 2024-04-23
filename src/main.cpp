@@ -29,10 +29,11 @@ std::string readFile(const std::string &filePath) {
 }
 
 void displayHelp() {
-    std::cout << "Usage: project1 [options] [...]\n"
+    std::cout << "Usage: [options]\n"
               << "Options:\n"
-              << "  -h, --help\t\tDisplay help\n"
-              << "  -f, --filepath\tSpecify the file path\n";
+              << "  -h, --help          Show this help message\n"
+              << "  -i, --input <file>  Specify the input file\n"
+              << "  -o, --output <file> Specify the output file\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -42,22 +43,27 @@ int main(int argc, char *argv[]) {
     }
 
     int opt;
-    std::string filepath;
+    std::string inputPath;
+    std::string outputPath;
 
     // Define the long options
     static struct option long_options[] = {
         {"help", no_argument, nullptr, 'h'},
-        {"filepath", required_argument, nullptr, 'f'},
+        {"input", required_argument, nullptr, 'i'},
+        {"output", required_argument, nullptr, 'o'},
         {nullptr, 0, nullptr, 0}};
     // Parse the options
-    while ((opt = getopt_long(argc, argv, "hf:", long_options, nullptr)) !=
+    while ((opt = getopt_long(argc, argv, "hi:o:", long_options, nullptr)) !=
            -1) {
         switch (opt) {
         case 'h':
             displayHelp();
             return 0;
-        case 'f':
-            filepath = optarg;
+        case 'i':
+            inputPath = optarg;
+            break;
+        case 'o':
+            outputPath = optarg;
             break;
         default:
             displayHelp();
@@ -65,7 +71,20 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    std::cout << readFile(filepath) << std::endl;
+    std::string content = readFile(inputPath);
+
+    if (!outputPath.empty()) {
+        std::ofstream outputFile(outputPath);
+        if (!outputFile.is_open()) {
+            std::cerr << "error: could not open output file '" << outputPath
+                      << "'\n";
+            return 1;
+        }
+        outputFile << content;
+        outputFile.close();
+    } else {
+        std::cout << content << std::endl;
+    }
 
     return 0;
 }
