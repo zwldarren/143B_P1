@@ -1,5 +1,9 @@
 #include "Manager.h"
 
+Manager::Manager() {}
+
+Manager::~Manager() {}
+
 void Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
     runningProcess = -1;
     nextProcessID = 0;
@@ -86,7 +90,10 @@ void Manager::destroy(int processID) {
                 siblings.end());
         }
 
-        // TODO: release resources
+        // release resources
+        for (auto &resource : process->resources) {
+            release(resource->state, resource->id);
+        }
 
         readyList.removeProcess(process->priority);
 
@@ -193,7 +200,7 @@ void Manager::timeout() {
     scheduler();
 }
 
-void Manager::executeCommand(const std::string &command) {
+int Manager::executeCommand(const std::string &command) {
     std::istringstream stream(command);
     std::string cmd;
     stream >> cmd;
@@ -223,5 +230,5 @@ void Manager::executeCommand(const std::string &command) {
     } else if (cmd == "to") {
         timeout();
     }
-    std::cout << runningProcess << std::endl;
+    return runningProcess;
 }

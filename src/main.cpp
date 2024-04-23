@@ -4,22 +4,28 @@
 #include <iostream>
 
 // Function to read a file
-void readFile(const std::string &filePath) {
+std::string readFile(const std::string &filePath) {
     std::ifstream file(filePath);
 
     if (!file.is_open()) {
         std::cerr << "Error: Could not open file " << filePath << std::endl;
-        return;
+        return "";
     }
 
     Manager manager;
     std::string line;
+    std::string output = "";
     while (std::getline(file, line)) {
-        manager.executeCommand(line);
-        // std::cout << line << std::endl;
+        if (line == "\r" || line == "\n" || line == "\r\n") {
+            manager = Manager();
+            output += "\n";
+        } else {
+            output += std::to_string(manager.executeCommand(line)) + " ";
+        }
     }
 
     file.close();
+    return output;
 }
 
 void displayHelp() {
@@ -59,7 +65,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    readFile(filepath);
+    std::cout << readFile(filepath) << std::endl;
 
     return 0;
 }

@@ -25,8 +25,8 @@ class Manager {
     int nextResourceID; // ID to assign to the next resource
 
   public:
-    Manager() {}
-    ~Manager() {}
+    Manager();
+    ~Manager();
 
     // Initialize all data structures
     void init(int numPriorityLevels, std::vector<int> resourceInventories);
@@ -41,5 +41,5 @@ class Manager {
     void timeout();  // Simulate a time-sharing timeout
 
     // Parse and execute commands
-    void executeCommand(const std::string &command);
+    int executeCommand(const std::string &command);
 };
