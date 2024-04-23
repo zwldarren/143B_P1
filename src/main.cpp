@@ -16,7 +16,7 @@ std::string readFile(const std::string &filePath) {
     std::string line;
     std::string output = "";
     while (std::getline(file, line)) {
-        if (line == "\r" || line == "\n" || line == "\r\n") {
+        if (line == "\r" || line == "\n" || line == "\r\n" || line == "") {
             manager = Manager();
             output += "\n";
         } else {
