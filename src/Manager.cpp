@@ -91,11 +91,11 @@ void Manager::destroy(int processID) {
         }
 
         // release resources
-        for (auto &resource : process->resources) {
-            release(resource->state, resource->id);
+        for (auto &rcb : process->resources) {
+            rcb->state += 1;
+            release(1, rcb->id);
         }
-
-        readyList.removeProcess(process->priority);
+        readyList.removeProcess(process->id);
 
         // remove from map
         processMap.erase(currentID);
@@ -125,7 +125,7 @@ void Manager::request(int units, int resourceID) {
 
         // Move process from readyList to waitlist of resource
         resource->waitlist.push(process);
-        readyList.removeProcess(process->priority);
+        readyList.removeProcess(process->id);
 
         scheduler();
     }
@@ -221,12 +221,12 @@ int Manager::executeCommand(const std::string &command) {
         destroy(processID);
     } else if (cmd == "rq") {
         int units, resourceID;
-        stream >> units >> resourceID;
-        request(runningProcess, resourceID);
+        stream >> resourceID >> units;
+        request(units, resourceID);
     } else if (cmd == "rl") {
         int units, resourceID;
         stream >> units >> resourceID;
-        release(runningProcess, resourceID);
+        release(units, resourceID);
     } else if (cmd == "to") {
         timeout();
     }
