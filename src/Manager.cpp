@@ -194,7 +194,7 @@ void Manager::timeout() {
     }
 
     // Move the process to the end of the queue
-    readyList.removeProcess(process->priority);
+    readyList.removeProcess(process->id);
     readyList.insertProcess(process);
 
     scheduler();
