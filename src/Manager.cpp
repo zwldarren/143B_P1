@@ -4,7 +4,7 @@ Manager::Manager() {}
 
 Manager::~Manager() {}
 
-void Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
+bool Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
     runningProcess = -1;
     nextProcessID = 0;
     nextResourceID = 0;
@@ -30,14 +30,15 @@ void Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
     processMap[nextProcessID] = initProcess;
     nextProcessID++;
     runningProcess = 0;
+
+    return true;
 }
 
-void Manager::init_default() { init(3, {1, 1, 2, 3}); }
+bool Manager::init_default() { return init(3, {1, 1, 2, 3}); }
 
-void Manager::create(int priority) {
+bool Manager::create(int priority) {
     if (priority < 1) {
-        // TODO: add result to output
-        return;
+        return false;
     }
 
     // Create a PCB with id = nextProcessID and priority = priority
@@ -56,9 +57,10 @@ void Manager::create(int priority) {
 
     nextProcessID++;
     scheduler();
+    return true;
 }
 
-void Manager::destroy(int processID) {
+bool Manager::destroy(int processID) {
     std::stack<int> stack;
     stack.push(processID);
 
@@ -68,8 +70,7 @@ void Manager::destroy(int processID) {
 
         auto it = processMap.find(currentID);
         if (it == processMap.end()) {
-            std::cerr << "Process not found" << std::endl;
-            continue;
+            return false;
         }
 
         auto process = it->second;
@@ -100,25 +101,28 @@ void Manager::destroy(int processID) {
         // remove from map
         processMap.erase(currentID);
     }
+    return true;
 }
 
-void Manager::request(int units, int resourceID) {
+bool Manager::request(int units, int resourceID) {
     auto it = resources.find(resourceID);
     if (it == resources.end()) {
-        // TODO: add result to output
-        return;
+        return false;
     }
     auto resource = it->second;
 
     // Current running process
     auto process = readyList.getRunningProcess();
 
+    bool result = false;
     // Check if free units are available
     if (resource->state >= units) {
         // Add the resource to the running process's resource list
         resource->state -= units;
 
         process->resources.push_back(resource);
+
+        result = true;
     } else {
         // Mark the current running process as blocked
         process->state = ProcessState::BLOCKED;
@@ -127,15 +131,15 @@ void Manager::request(int units, int resourceID) {
         resource->waitlist.push(process);
         readyList.removeProcess(process->id);
 
-        scheduler();
+        result = scheduler();
     }
+    return result;
 }
 
-void Manager::release(int units, int resourceID) {
+bool Manager::release(int units, int resourceID) {
     auto it = resources.find(resourceID);
     if (it == resources.end()) {
-        // TODO: add result to output
-        return;
+        return false;
     }
     auto resource = it->second;
 
@@ -143,8 +147,7 @@ void Manager::release(int units, int resourceID) {
     auto process = readyList.getRunningProcess();
 
     if (resource->state + units > resource->inventory) {
-        // TODO: add result to output
-        return;
+        return false;
     }
 
     // Remove the resource from the running process's resource list
@@ -168,67 +171,71 @@ void Manager::release(int units, int resourceID) {
         // Insert resource to blocked process's resource list
         blockedProcess->resources.push_back(resource);
 
-        scheduler();
+        return scheduler();
     }
+    return false;
 }
 
-int Manager::scheduler() {
+bool Manager::scheduler() {
     // Get the process with the highest priority
     auto nextProcess = readyList.getHighestPriorityProcess();
     if (nextProcess == nullptr) {
-        return -1;
+        return false;
     }
 
     // Update the running process
     runningProcess = nextProcess->id;
     readyList.contextSwitch();
-    return runningProcess;
+    return true;
 }
 
-void Manager::timeout() {
+bool Manager::timeout() {
     // Get the current running process
     auto process = readyList.getRunningProcess();
     if (process == nullptr) {
-        // TODO: add result to output
-        return;
+        return false;
     }
 
     // Move the process to the end of the queue
     readyList.removeProcess(process->id);
     readyList.insertProcess(process);
 
-    scheduler();
+    return scheduler();
 }
 
 int Manager::executeCommand(const std::string &command) {
     std::istringstream stream(command);
     std::string cmd;
     stream >> cmd;
+    bool result = false;
 
     if (cmd == "in") {
         int n, u0, u1, u2, u3;
         stream >> n >> u0 >> u1 >> u2 >> u3;
-        init(n, {u0, u1, u2, u3});
+        result = init(n, {u0, u1, u2, u3});
     } else if (cmd == "id") {
-        init_default();
+        result = init_default();
     } else if (cmd == "cr") {
         int priority;
         stream >> priority;
-        create(priority);
+        result = create(priority);
     } else if (cmd == "de") {
         int processID;
         stream >> processID;
-        destroy(processID);
+        result = destroy(processID);
     } else if (cmd == "rq") {
         int units, resourceID;
         stream >> resourceID >> units;
-        request(units, resourceID);
+        result = request(units, resourceID);
     } else if (cmd == "rl") {
         int units, resourceID;
         stream >> units >> resourceID;
-        release(units, resourceID);
+        result = release(units, resourceID);
     } else if (cmd == "to") {
-        timeout();
+        result = timeout();
+    }
+    if (!result) {
+        return -1;
     }
     return runningProcess;
 }

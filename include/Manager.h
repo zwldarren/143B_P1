@@ -29,16 +29,16 @@ class Manager {
     ~Manager();
 
     // Initialize all data structures
-    void init(int numPriorityLevels, std::vector<int> resourceInventories);
-    void init_default();
+    bool init(int numPriorityLevels, std::vector<int> resourceInventories);
+    bool init_default();
 
-    void create(int priority);   // Create a new process
-    void destroy(int processID); // Destroy a process and its descendants
-    void request(int units, int resourceID); // Request a resource
-    void release(int units, int resourceID); // Release a resource
+    bool create(int priority);   // Create a new process
+    bool destroy(int processID); // Destroy a process and its descendants
+    bool request(int units, int resourceID); // Request a resource
+    bool release(int units, int resourceID); // Release a resource
 
-    int scheduler(); // return the id of the running process
-    void timeout();  // Simulate a time-sharing timeout
+    bool scheduler();
+    bool timeout(); // Simulate a time-sharing timeout
 
     // Parse and execute commands
     int executeCommand(const std::string &command);
