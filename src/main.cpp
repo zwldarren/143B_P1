@@ -3,24 +3,44 @@
 #include <getopt.h>
 #include <iostream>
 
+std::string trim(const std::string &str) {
+    size_t first = str.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos)
+        return "";
+    size_t last = str.find_last_not_of(" \t\r\n");
+    return str.substr(first, (last - first + 1));
+}
+
 // Function to read a file
 std::string readFile(const std::string &filePath) {
     std::ifstream file(filePath);
-
     if (!file.is_open()) {
         std::cerr << "Error: Could not open file " << filePath << std::endl;
         return "";
     }
 
     Manager manager;
-    std::string line;
-    std::string output = "";
+    std::string line, output;
+    bool shouldReset = true; // Flag to check if we need to reset the manager
+
     while (std::getline(file, line)) {
-        if (line == "\r" || line == "\n" || line == "\r\n" || line == "") {
-            manager = Manager();
-            output += "\n";
-        } else {
-            output += std::to_string(manager.executeCommand(line)) + " ";
+        line = trim(line);
+        std::istringstream stream(line);
+        std::string cmd;
+        stream >> cmd;
+
+        // Check if the command is 'in' or 'id', if so, reset the manager
+        if (cmd == "in" || cmd == "id") {
+            if (shouldReset) {
+                manager = Manager();
+                output += "\n";
+            }
+            shouldReset = true;
+        }
+
+        if (!line.empty()) {
+            int commandResult = manager.executeCommand(line);
+            output += std::to_string(commandResult) + " ";
         }
     }
 
