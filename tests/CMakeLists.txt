@@ -7,7 +7,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 enable_testing()
 add_executable(test_exe test.cpp)
-target_link_libraries(test_exe gtest_main)
+target_include_directories(test_exe PRIVATE ${GTEST_INCLUDE_DIRS})
+target_link_libraries(test_exe gtest_main ${GTEST_BOTH_LIBRARIES})
 
 include(GoogleTest)
 gtest_discover_tests(test_exe)
