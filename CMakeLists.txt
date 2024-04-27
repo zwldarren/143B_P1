@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(project1 VERSION 0.1.0 LANGUAGES C CXX)
 
-include(CTest)
-enable_testing()
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 add_subdirectory(tests)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

@@ -19,9 +19,9 @@ std::string readFile(const std::string &filePath) {
         return "";
     }
 
-    Manager manager;
+    Manager manager = Manager();
     std::string line, output;
-    bool shouldReset = true; // Flag to check if we need to reset the manager
+    bool shouldReset = false; // Flag to check if we need to reset the manager
 
     while (std::getline(file, line)) {
         line = trim(line);
@@ -33,6 +33,7 @@ std::string readFile(const std::string &filePath) {
         if (cmd == "in" || cmd == "id") {
             if (shouldReset) {
                 manager = Manager();
+                output = output.substr(0, output.size() - 1);
                 output += "\n";
             }
             shouldReset = true;
