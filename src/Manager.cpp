@@ -128,8 +128,8 @@ bool Manager::request(int units, int resourceID) {
         process->state = ProcessState::BLOCKED;
 
         // Move process from readyList to waitlist of resource
-        resource->waitlist.push(process);
         readyList.removeProcess(process->id);
+        resource->waitlist.emplace_back(process, units);
 
         result = scheduler();
     }
@@ -146,13 +146,7 @@ bool Manager::release(int units, int resourceID) {
     // Current running process
     auto process = readyList.getRunningProcess();
 
-    if (resource->state + units > resource->inventory) {
-        return false;
-    }
-
-    // Remove the resource from the running process's resource list
-    resource->state += units;
-
+    // remove (process, units) from process->resources
     process->resources.erase(
         std::remove_if(process->resources.begin(), process->resources.end(),
                        [resourceID](const std::shared_ptr<RCB> &rcb) {
@@ -160,20 +154,19 @@ bool Manager::release(int units, int resourceID) {
                        }),
         process->resources.end());
 
-    // Check if waitlist is not empty
-    if (!resource->waitlist.empty()) {
-        // Move process from head of waitlist to readyList
-        auto blockedProcess = resource->waitlist.front();
-        resource->waitlist.pop();
-        blockedProcess->state = ProcessState::READY;
-        readyList.insertProcess(blockedProcess);
-
-        // Insert resource to blocked process's resource list
-        blockedProcess->resources.push_back(resource);
-
-        return scheduler();
+    resource->state += units;
+    while (resource->waitlist.empty() == false && resource->state > 0) {
+        auto [blockedProcess, blockedUnits] = resource->waitlist.front();
+        if (blockedUnits <= resource->state) {
+            resource->state -= blockedUnits;
+            blockedProcess->state = ProcessState::READY;
+            readyList.insertProcess(blockedProcess);
+            resource->waitlist.pop_front();
+        } else {
+            break;
+        }
     }
-    return false;
+    return scheduler();
 }
 
 bool Manager::scheduler() {
