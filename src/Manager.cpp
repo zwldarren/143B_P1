@@ -156,12 +156,18 @@ bool Manager::release(int units, int resourceID) {
 
     resource->state += units;
     while (resource->waitlist.empty() == false && resource->state > 0) {
-        auto [blockedProcess, blockedUnits] = resource->waitlist.front();
-        if (blockedUnits <= resource->state) {
+        auto &[blockedProcess, blockedUnits] = resource->waitlist.front();
+        if (resource->state >= blockedUnits) {
+            // Allocate resource to the blocked process
             resource->state -= blockedUnits;
             blockedProcess->state = ProcessState::READY;
-            readyList.insertProcess(blockedProcess);
+            blockedProcess->resources.push_back(resource);
+
+            // Remove the process from the resource's waitlist
             resource->waitlist.pop_front();
+
+            // Add the process back to the ready list
+            readyList.insertProcess(blockedProcess);
         } else {
             break;
         }
