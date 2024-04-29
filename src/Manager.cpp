@@ -107,6 +107,8 @@ bool Manager::destroy(int processID) {
 bool Manager::request(int units, int resourceID) {
     auto it = resources.find(resourceID);
     if (it == resources.end()) {
+        std::cerr << "Error: Resource " << resourceID << " does not exist."
+                  << std::endl;
         return false;
     }
     auto resource = it->second;
@@ -114,26 +116,27 @@ bool Manager::request(int units, int resourceID) {
     // Current running process
     auto process = readyList.getRunningProcess();
 
-    bool result = false;
+    // Prevent process 0 from requesting any resources
+    if (runningProcess == 0) {
+        return false;
+    }
+    // Check if the units requested have exceeded the inventory
+    if (resource->inventory < units) {
+        return false;
+    }
+
     // Check if free units are available
     if (resource->state >= units) {
         // Add the resource to the running process's resource list
         resource->state -= units;
-
         process->resources.push_back(resource);
-
-        result = true;
+        return true;
     } else {
-        // Mark the current running process as blocked
         process->state = ProcessState::BLOCKED;
-
-        // Move process from readyList to waitlist of resource
         readyList.removeProcess(process->id);
         resource->waitlist.emplace_back(process, units);
-
-        result = scheduler();
+        return scheduler();
     }
-    return result;
 }
 
 bool Manager::release(int units, int resourceID) {
