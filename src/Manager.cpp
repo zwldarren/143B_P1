@@ -149,12 +149,13 @@ bool Manager::release(int units, int resourceID) {
     auto process = readyList.getRunningProcess();
 
     // Check if the process actually holds the resource it's trying to release
-    auto it2 = std::find_if(
-        process->resources.begin(), process->resources.end(),
-        [resourceID, units](const std::pair<std::shared_ptr<RCB>, int> &rcb) {
-            return rcb.first->id == resourceID && rcb.second == units;
-        });
-    if (it2 == process->resources.end()) {
+    int totalUnitsHeld = 0;
+    for (auto &res : process->resources) {
+        if (res.first->id == resourceID) {
+            totalUnitsHeld += resource->inventory - res.first->state;
+        }
+    }
+    if (totalUnitsHeld < units) {
         return false;
     }
 
