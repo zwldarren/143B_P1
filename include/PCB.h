@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <utility>
 #include <vector>
 
 struct RCB;
@@ -11,7 +12,8 @@ struct PCB {
     std::shared_ptr<PCB> parent;
     int priority;
     std::vector<std::shared_ptr<PCB>> children;
-    std::vector<std::shared_ptr<RCB>> resources;
+    // vector of pairs(resource, units)
+    std::vector<std::pair<std::shared_ptr<RCB>, int>> resources;
 
     PCB(int id, int priority)
         : id(id), state(ProcessState::READY), priority(priority) {}

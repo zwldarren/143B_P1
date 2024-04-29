@@ -93,8 +93,7 @@ bool Manager::destroy(int processID) {
 
         // release resources
         for (auto &rcb : process->resources) {
-            rcb->state += 1;
-            release(1, rcb->id);
+            release(rcb.second, rcb.first->id);
         }
         readyList.removeProcess(process->id);
 
@@ -107,8 +106,8 @@ bool Manager::destroy(int processID) {
 bool Manager::request(int units, int resourceID) {
     auto it = resources.find(resourceID);
     if (it == resources.end()) {
-        std::cerr << "Error: Resource " << resourceID << " does not exist."
-                  << std::endl;
+        // std::cerr << "Error: Resource " << resourceID << " does not exist."
+        //           << std::endl;
         return false;
     }
     auto resource = it->second;
@@ -129,7 +128,7 @@ bool Manager::request(int units, int resourceID) {
     if (resource->state >= units) {
         // Add the resource to the running process's resource list
         resource->state -= units;
-        process->resources.push_back(resource);
+        process->resources.push_back(std::make_pair(resource, units));
         return true;
     } else {
         process->state = ProcessState::BLOCKED;
@@ -149,11 +148,23 @@ bool Manager::release(int units, int resourceID) {
     // Current running process
     auto process = readyList.getRunningProcess();
 
-    // remove (process, units) from process->resources
+    // Check if the process actually holds the resource it's trying to release
+    auto it2 = std::find_if(
+        process->resources.begin(), process->resources.end(),
+        [resourceID, units](const std::pair<std::shared_ptr<RCB>, int> &rcb) {
+            return rcb.first->id == resourceID && rcb.second == units;
+        });
+    if (it2 == process->resources.end()) {
+        return false;
+    }
+
+    // remove (r, k) from i.resources
     process->resources.erase(
         std::remove_if(process->resources.begin(), process->resources.end(),
-                       [resourceID](const std::shared_ptr<RCB> &rcb) {
-                           return rcb->id == resourceID;
+                       [resourceID, units](
+                           const std::pair<std::shared_ptr<RCB>, int> &rcb) {
+                           return rcb.first->id == resourceID &&
+                                  rcb.second == units;
                        }),
         process->resources.end());
 
@@ -164,7 +175,8 @@ bool Manager::release(int units, int resourceID) {
             // Allocate resource to the blocked process
             resource->state -= blockedUnits;
             blockedProcess->state = ProcessState::READY;
-            blockedProcess->resources.push_back(resource);
+            blockedProcess->resources.push_back(
+                std::make_pair(resource, blockedUnits));
 
             // Remove the process from the resource's waitlist
             resource->waitlist.pop_front();
@@ -231,7 +243,7 @@ int Manager::executeCommand(const std::string &command) {
         result = request(units, resourceID);
     } else if (cmd == "rl") {
         int units, resourceID;
-        stream >> units >> resourceID;
+        stream >> resourceID >> units;
         result = release(units, resourceID);
     } else if (cmd == "to") {
         result = timeout();
