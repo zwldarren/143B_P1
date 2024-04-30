@@ -35,7 +35,8 @@ class Manager {
     bool create(int priority);   // Create a new process
     bool destroy(int processID); // Destroy a process and its descendants
     bool request(int units, int resourceID); // Request a resource
-    bool release(int units, int resourceID); // Release a resource
+    // Release a resource
+    bool release(int units, int resourceID, int processID = -1);
 
     bool scheduler();
     bool timeout(); // Simulate a time-sharing timeout

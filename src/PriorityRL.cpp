@@ -38,6 +38,10 @@ std::shared_ptr<PCB> PriorityRL::getRunningProcess() {
     return nullptr;
 }
 
+/*
+    Context Switch will change the state of the RUNNING process to READY and
+    change the state of the highest priority READY process to RUNNING
+*/
 void PriorityRL::contextSwitch() {
     // Change the state of the RUNNING process to READY
     for (auto it = lists.begin(); it != lists.end(); ++it) {

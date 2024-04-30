@@ -91,10 +91,11 @@ bool Manager::destroy(int processID) {
                 siblings.end());
         }
 
-        // release resources
-        for (auto &rcb : process->resources) {
-            release(rcb.second, rcb.first->id);
+        // release all resources of process
+        for (auto &res : process->resources) {
+            release(res.second, res.first->id, process->id);
         }
+
         readyList.removeProcess(process->id);
 
         // remove from map
@@ -116,7 +117,8 @@ bool Manager::request(int units, int resourceID) {
     auto process = readyList.getRunningProcess();
 
     // Prevent process 0 from requesting any resources
-    if (runningProcess == 0) {
+    // and requesting 0 units
+    if (runningProcess == 0 || units < 1) {
         return false;
     }
     // Check if the units requested have exceeded the inventory
@@ -138,17 +140,27 @@ bool Manager::request(int units, int resourceID) {
     }
 }
 
-bool Manager::release(int units, int resourceID) {
+bool Manager::release(int units, int resourceID, int processID) {
     auto it = resources.find(resourceID);
     if (it == resources.end()) {
         return false;
     }
     auto resource = it->second;
 
-    // Current running process
-    auto process = readyList.getRunningProcess();
+    std::shared_ptr<PCB> process;
+    if (processID == -1) {
+        // set process to running process if not specified
+        process = readyList.getRunningProcess();
+    } else {
+        auto it = processMap.find(processID);
+        if (it == processMap.end()) {
+            return false;
+        }
+        process = it->second;
+    }
 
-    // Check if the process actually holds the resource it's trying to release
+    // Check if the process actually holds the resource it's trying to
+    // release
     int totalUnitsHeld = 0;
     for (auto &res : process->resources) {
         if (res.first->id == resourceID) {
