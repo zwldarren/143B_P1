@@ -61,6 +61,20 @@ bool Manager::create(int priority) {
 }
 
 bool Manager::destroy(int processID) {
+    if (processMap.find(processID) == processMap.end()) {
+        return false; // Process does not exist
+    }
+
+    auto runningProcess = readyList.getRunningProcess();
+    // Check if the process to be destroyed is a child of the running process
+    auto &children = runningProcess->children;
+    if (std::find_if(children.begin(), children.end(),
+                     [processID](const std::shared_ptr<PCB> &child) {
+                         return child->id == processID;
+                     }) == children.end()) {
+        return false;
+    }
+
     std::stack<int> stack;
     stack.push(processID);
 
@@ -70,9 +84,8 @@ bool Manager::destroy(int processID) {
 
         auto it = processMap.find(currentID);
         if (it == processMap.end()) {
-            return false;
+            continue;
         }
-
         auto process = it->second;
 
         // Push all children to stack
