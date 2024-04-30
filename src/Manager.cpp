@@ -15,7 +15,7 @@ bool Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
     for (int i = 0; i < totalResources.size(); ++i) {
         // Create a RCB with id = nextResourceID and
         // inventory = totalResources[i]
-        auto newResource = std::make_shared<RCB>(totalResources[i]);
+        auto newResource = std::make_shared<RCB>(i, totalResources[i]);
         int resourceId = resources.insert(newResource);
         if (resourceId == -1) {
             return false;
@@ -88,6 +88,9 @@ bool Manager::destroy(int processID) {
         queue.pop();
 
         auto process = processMap.get(currentID);
+        if (process == nullptr) {
+            continue;
+        }
 
         // Push all children to queue
         for (auto &child : process->children) {
@@ -97,12 +100,13 @@ bool Manager::destroy(int processID) {
         // Remove from parent's child list
         if (process->parent) {
             auto &siblings = process->parent->children;
-            siblings.erase(
-                std::remove_if(siblings.begin(), siblings.end(),
-                               [currentID](const std::shared_ptr<PCB> &pcb) {
-                                   return pcb->id == currentID;
-                               }),
-                siblings.end());
+            for (auto it = siblings.begin(); it != siblings.end();) {
+                if ((*it)->id == currentID) {
+                    it = siblings.erase(it);
+                } else {
+                    ++it;
+                }
+            }
         }
 
         // release all resources of process
@@ -244,6 +248,7 @@ int Manager::executeCommand(const std::string &command) {
     std::string cmd;
     stream >> cmd;
     bool result = false;
+    // std::cout << command << std::endl;
 
     if (cmd == "in") {
         int n, u0, u1, u2, u3;
