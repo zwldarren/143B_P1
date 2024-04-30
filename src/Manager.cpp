@@ -6,8 +6,6 @@ Manager::~Manager() {}
 
 bool Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
     runningProcess = -1;
-    nextProcessID = 0;
-    nextResourceID = 0;
 
     readyList = PriorityRL(numPriorityLevels);
 
@@ -17,19 +15,24 @@ bool Manager::init(int numPriorityLevels, std::vector<int> totalResources) {
     for (int i = 0; i < totalResources.size(); ++i) {
         // Create a RCB with id = nextResourceID and
         // inventory = totalResources[i]
-        auto newResource =
-            std::make_shared<RCB>(nextResourceID, totalResources[i]);
-        resources[nextResourceID] = newResource;
-        nextResourceID++;
+        auto newResource = std::make_shared<RCB>(totalResources[i]);
+        int resourceId = resources.insert(newResource);
+        if (resourceId == -1) {
+            return false;
+        }
     }
 
-    // Create the init process with id = 0, priority = 0
-    auto initProcess = std::make_shared<PCB>(nextProcessID, 0);
+    // Create the init process with priority = 0
+    auto initProcess = std::make_shared<PCB>(0);
     initProcess->state = ProcessState::RUNNING;
+    int processId = processMap.insert(initProcess);
+    if (processId == -1) {
+        return false;
+    } else {
+        initProcess->id = processId;
+    }
     readyList.insertProcess(initProcess);
-    processMap[nextProcessID] = initProcess;
-    nextProcessID++;
-    runningProcess = 0;
+    runningProcess = processId;
 
     return true;
 }
@@ -41,8 +44,14 @@ bool Manager::create(int priority) {
         return false;
     }
 
-    // Create a PCB with id = nextProcessID and priority = priority
-    auto newProcess = std::make_shared<PCB>(nextProcessID, priority);
+    // Create a PCB with priority = priority
+    auto newProcess = std::make_shared<PCB>(priority);
+    int id = processMap.insert(newProcess);
+    if (id == -1) {
+        return false;
+    } else {
+        newProcess->id = id;
+    }
     newProcess->state = ProcessState::READY;
     readyList.insertProcess(newProcess);
 
@@ -52,16 +61,12 @@ bool Manager::create(int priority) {
     // update parent of new process
     newProcess->parent = parent;
 
-    // add to map
-    processMap[nextProcessID] = newProcess;
-
-    nextProcessID++;
     scheduler();
     return true;
 }
 
 bool Manager::destroy(int processID) {
-    if (processMap.find(processID) == processMap.end()) {
+    if (!processMap.exists(processID)) {
         return false; // Process does not exist
     }
 
@@ -82,11 +87,7 @@ bool Manager::destroy(int processID) {
         int currentID = queue.front();
         queue.pop();
 
-        auto it = processMap.find(currentID);
-        if (it == processMap.end()) {
-            continue;
-        }
-        auto process = it->second;
+        auto process = processMap.get(currentID);
 
         // Push all children to queue
         for (auto &child : process->children) {
@@ -112,19 +113,16 @@ bool Manager::destroy(int processID) {
         readyList.removeProcess(process->id);
 
         // remove from map
-        processMap.erase(currentID);
+        processMap.remove(currentID);
     }
     return true;
 }
 
 bool Manager::request(int units, int resourceID) {
-    auto it = resources.find(resourceID);
-    if (it == resources.end()) {
-        // std::cerr << "Error: Resource " << resourceID << " does not exist."
-        //           << std::endl;
+    if (!resources.exists(resourceID)) {
         return false;
     }
-    auto resource = it->second;
+    auto resource = resources.get(resourceID);
 
     // Current running process
     auto process = readyList.getRunningProcess();
@@ -154,22 +152,20 @@ bool Manager::request(int units, int resourceID) {
 }
 
 bool Manager::release(int units, int resourceID, int processID) {
-    auto it = resources.find(resourceID);
-    if (it == resources.end()) {
+    if (!resources.exists(resourceID)) {
         return false;
     }
-    auto resource = it->second;
+    auto resource = resources.get(resourceID);
 
     std::shared_ptr<PCB> process;
     if (processID == -1) {
         // set process to running process if not specified
         process = readyList.getRunningProcess();
     } else {
-        auto it = processMap.find(processID);
-        if (it == processMap.end()) {
+        if (!processMap.exists(processID)) {
             return false;
         }
-        process = it->second;
+        process = processMap.get(processID);
     }
 
     // Check if the process actually holds the resource it's trying to
