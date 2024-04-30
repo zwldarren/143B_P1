@@ -75,12 +75,12 @@ bool Manager::destroy(int processID) {
         return false;
     }
 
-    std::stack<int> stack;
-    stack.push(processID);
+    std::queue<int> queue;
+    queue.push(processID);
 
-    while (!stack.empty()) {
-        int currentID = stack.top();
-        stack.pop();
+    while (!queue.empty()) {
+        int currentID = queue.front();
+        queue.pop();
 
         auto it = processMap.find(currentID);
         if (it == processMap.end()) {
@@ -88,9 +88,9 @@ bool Manager::destroy(int processID) {
         }
         auto process = it->second;
 
-        // Push all children to stack
+        // Push all children to queue
         for (auto &child : process->children) {
-            stack.push(child->id);
+            queue.push(child->id);
         }
 
         // Remove from parent's child list
