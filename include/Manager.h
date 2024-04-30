@@ -7,6 +7,7 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <queue>
 #include <sstream>
 #include <stack>
 #include <string>
