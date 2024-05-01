@@ -19,4 +19,10 @@ struct PCB {
         : id(-1), state(ProcessState::READY), priority(priority) {}
     PCB(int id, int priority)
         : id(id), state(ProcessState::READY), priority(priority) {}
+
+    void removeFromChildren(int processID);
+
+    bool isChild(int processID);
+
+    void resourceRelease(int resourceID);
 };

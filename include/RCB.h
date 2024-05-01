@@ -14,4 +14,6 @@ struct RCB {
     RCB(int inventory) : id(-1), state(inventory), inventory(inventory) {}
     RCB(int id, int inventory)
         : id(id), state(inventory), inventory(inventory) {}
+
+    void removeFromWaitlist(int processID);
 };

@@ -72,11 +72,7 @@ bool Manager::destroy(int processID) {
 
     auto runningProcess = readyList.getRunningProcess();
     // Check if the process to be destroyed is a child of the running process
-    auto &children = runningProcess->children;
-    if (std::find_if(children.begin(), children.end(),
-                     [processID](const std::shared_ptr<PCB> &child) {
-                         return child->id == processID;
-                     }) == children.end()) {
+    if (!runningProcess->isChild(processID)) {
         return false;
     }
 
@@ -98,20 +94,21 @@ bool Manager::destroy(int processID) {
         }
 
         // Remove from parent's child list
-        if (process->parent) {
-            auto &siblings = process->parent->children;
-            for (auto it = siblings.begin(); it != siblings.end();) {
-                if ((*it)->id == currentID) {
-                    it = siblings.erase(it);
-                } else {
-                    ++it;
-                }
-            }
+        process->parent->removeFromChildren(currentID);
+
+        // Remove from waitlist of all resources
+        auto allResources = resources.getAllValidEntries();
+        for (auto &[id, resource] : allResources) {
+            resource->removeFromWaitlist(currentID);
         }
 
         // release all resources of process
-        for (auto &res : process->resources) {
-            release(res.second, res.first->id, process->id);
+        for (auto &[res, units] : process->resources) {
+            // check if res is empty
+            if (res == nullptr) {
+                continue;
+            }
+            release(units, res->id, process->id);
         }
 
         readyList.removeProcess(process->id);
@@ -184,15 +181,19 @@ bool Manager::release(int units, int resourceID, int processID) {
         return false;
     }
 
+    // Check the total units held by the process
+    int processUnits = 0;
+    for (auto &[res, u] : process->resources) {
+        if (res->id == resourceID) {
+            processUnits += u;
+        }
+    }
+    if (processUnits < units) {
+        return false;
+    }
+
     // remove (r, k) from i.resources
-    process->resources.erase(
-        std::remove_if(process->resources.begin(), process->resources.end(),
-                       [resourceID, units](
-                           const std::pair<std::shared_ptr<RCB>, int> &rcb) {
-                           return rcb.first->id == resourceID &&
-                                  rcb.second == units;
-                       }),
-        process->resources.end());
+    process->resourceRelease(resourceID);
 
     resource->state += units;
     while (resource->waitlist.empty() == false && resource->state > 0) {
@@ -208,7 +209,9 @@ bool Manager::release(int units, int resourceID, int processID) {
             resource->waitlist.pop_front();
 
             // Add the process back to the ready list
+            // if (processID == -1) {
             readyList.insertProcess(blockedProcess);
+            // }
         } else {
             break;
         }

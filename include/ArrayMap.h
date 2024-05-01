@@ -4,6 +4,7 @@
 #include <optional>
 #include <stack>
 #include <stdexcept>
+#include <vector>
 
 template <typename T, std::size_t Size> class ArrayMap {
   private:
@@ -58,5 +59,16 @@ template <typename T, std::size_t Size> class ArrayMap {
         for (int i = Size - 1; i >= 0; --i) {
             freeIndices.push(i);
         }
+    }
+
+    std::vector<std::pair<int, T &>> getAllValidEntries() {
+        // ex: [(id, element)]
+        std::vector<std::pair<int, T &>> entries;
+        for (int i = 0; i < Size; ++i) {
+            if (data[i].has_value()) {
+                entries.emplace_back(i, *data[i]);
+            }
+        }
+        return entries;
     }
 };
