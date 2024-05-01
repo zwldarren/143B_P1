@@ -31,7 +31,7 @@ The following commands are used for input:
 |cr \<p>	| Create a new process at priority level \<p>. \<p> can be 1 or 2.|
 | de \<i> | Destroy the process identified by the PCB index \<i>, and all of its descendants |
 | rq \<r> \<k>	| Request \<k> units of resource \<r>|
-| rl \<r> \<k>	| Release \<k> units of resource <r>. <r> can be 0, 1, 2, or 3 | 
+| rl \<r> \<k>	| Release \<k> units of resource \<r>. \<r> can be 0, 1, 2, or 3 | 
 | to | Invoke the timeout function |
 
 For each input command, output the index of the process running next, as a single integer separated by a space.
