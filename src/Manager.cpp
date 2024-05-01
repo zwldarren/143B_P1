@@ -102,16 +102,14 @@ bool Manager::destroy(int processID) {
             resource->removeFromWaitlist(currentID);
         }
 
+        readyList.removeProcess(process->id);
+
         // release all resources of process
-        for (auto &[res, units] : process->resources) {
-            // check if res is empty
-            if (res == nullptr) {
-                continue;
-            }
+        std::vector<std::pair<std::shared_ptr<RCB>, int>> resourcesCopy =
+            process->resources;
+        for (auto &[res, units] : resourcesCopy) {
             release(units, res->id, process->id);
         }
-
-        readyList.removeProcess(process->id);
 
         // remove from map
         processMap.remove(currentID);
