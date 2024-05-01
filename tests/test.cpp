@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -9,20 +10,30 @@ std::string readFileContents(const std::string &filePath) {
     return buffer.str();
 }
 
-TEST(FileComparisonTest, CompareFiles) {
-    std::string outputFilePath = "${CMAKE_CURRENT_BINARY_DIR}/test_output.txt";
-    std::string expectedFilePath =
-        "${CMAKE_CURRENT_SOURCE_DIR}/data/sample-output.txt";
-
-    std::string actualContents = readFileContents(outputFilePath);
-    std::string expectedContents = readFileContents(expectedFilePath);
-
-    ASSERT_EQ(actualContents, expectedContents)
-        << "Files " << outputFilePath << " and " << expectedFilePath
-        << " differ!";
+std::string normalize(const std::string &input) {
+    std::string output = input;
+    size_t pos = 0;
+    // Replace all '\r\n' with '\n'
+    while ((pos = output.find("\r\n", pos)) != std::string::npos) {
+        output.replace(pos, 2, "\n");
+    }
+    return output;
 }
 
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+TEST(FileComparisonTest, CompareOutputWithExpected) {
+    std::string inputFilePath = INPUT_FILE_PATH;
+    std::string outputFilePath = OUTPUT_FILE_PATH;
+    std::string expectedFilePath = EXPECTED_FILE_PATH;
+    std::string mainFilePath = EXECUTABLE_FILE_PATH;
+
+    std::string command = mainFilePath + " --input " + inputFilePath +
+                          " --output " + outputFilePath;
+    system(command.c_str());
+
+    std::string actualContents = normalize(readFileContents(outputFilePath));
+    std::string expectedContents =
+        normalize(readFileContents(expectedFilePath));
+
+    ASSERT_EQ(actualContents, expectedContents)
+        << "Output content differs from expected content!";
 }

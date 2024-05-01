@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ArrayMap.h"
 #include "PCB.h"
 #include "PriorityRL.h"
 #include "RCB.h"
@@ -7,23 +8,20 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <sstream>
-#include <stack>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 class Manager {
   private:
     // Map of process ID to PCB pointer
-    std::unordered_map<int, std::shared_ptr<PCB>> processMap;
+    ArrayMap<std::shared_ptr<PCB>, 16> processMap;
     // Map of resource ID to RCB pointer
-    std::unordered_map<int, std::shared_ptr<RCB>> resources;
+    ArrayMap<std::shared_ptr<RCB>, 4> resources;
     PriorityRL readyList;
     int runningProcess; // Index of the currently running process
-    int nextProcessID;  // ID to assign to the next process
-    int nextResourceID; // ID to assign to the next resource
 
   public:
     Manager();

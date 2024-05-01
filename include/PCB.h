@@ -15,6 +15,14 @@ struct PCB {
     // vector of pairs(resource, units)
     std::vector<std::pair<std::shared_ptr<RCB>, int>> resources;
 
+    PCB(int priority)
+        : id(-1), state(ProcessState::READY), priority(priority) {}
     PCB(int id, int priority)
         : id(id), state(ProcessState::READY), priority(priority) {}
+
+    void removeFromChildren(int processID);
+
+    bool isChild(int processID);
+
+    void resourceRelease(int resourceID);
 };
