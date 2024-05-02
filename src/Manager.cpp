@@ -53,7 +53,8 @@ bool Manager::create(int priority) {
         newProcess->id = id;
     }
     newProcess->state = ProcessState::READY;
-    readyList.insertProcess(newProcess);
+    if (!readyList.insertProcess(newProcess))
+        return false;
 
     // update child list of current running process
     auto parent = readyList.getRunningProcess();

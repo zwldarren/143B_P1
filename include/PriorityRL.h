@@ -14,7 +14,7 @@ class PriorityRL {
     PriorityRL(int numPriorityLevels);
 
     // Add a process to a specific priority level
-    void insertProcess(std::shared_ptr<PCB> process);
+    bool insertProcess(std::shared_ptr<PCB> process);
 
     // Remove the process by id
     void removeProcess(int id);

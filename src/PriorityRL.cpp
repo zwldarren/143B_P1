@@ -4,8 +4,12 @@ PriorityRL::PriorityRL(int numPriorityLevels) {
     lists.resize(numPriorityLevels);
 }
 
-void PriorityRL::insertProcess(std::shared_ptr<PCB> process) {
+bool PriorityRL::insertProcess(std::shared_ptr<PCB> process) {
+    if (process->priority < 0 || process->priority >= lists.size()) {
+        return false;
+    }
     lists[process->priority].push_back(process);
+    return true;
 }
 
 void PriorityRL::removeProcess(int id) {
